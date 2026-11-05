@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prospect Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --field:#14100C; --panel:#1E1813; --panel-2:#241C15; --line:#33291F;
+      --radar:#C8622A; --radar-soft:#A9532400; --radar-dim:#6E4A32;
+      --ink:#EDE4D8; --ghost:#8A7A68; --ghost-dim:#5C4F41;
+      --steel:#5A7A8A; --steel-dim:#3C4E57;
+      --prime:#E0873F;
+      --mono:'JetBrains Mono',ui-monospace,monospace;
+      --disp:'Oswald',system-ui,sans-serif;
+      --body:'Inter',system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--field);color:var(--ink);font-family:var(--body);}
+    body{padding:0;min-height:100vh;}
+    a{color:var(--radar);text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    ::selection{background:var(--radar);color:var(--field);}
+
+    /* ===== Top readout bar ===== */
+    .bar{
+      position:sticky;top:0;z-index:50;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 22px;background:linear-gradient(180deg,var(--panel) 0%,var(--field) 100%);
+      border-bottom:1px solid var(--line);
+    }
+    .brand{display:flex;align-items:center;gap:12px;}
+    .scope{
+      width:26px;height:26px;border-radius:50%;position:relative;flex:none;
+      border:1.5px solid var(--radar-dim);
+      background:
+        radial-gradient(circle,transparent 55%,rgba(200,98,42,.08) 100%);
+      overflow:hidden;
+    }
+    .scope::before{
+      content:"";position:absolute;inset:0;border-radius:50%;
+      background:conic-gradient(from 0deg,rgba(200,98,42,.55),transparent 60%);
+      animation:sweep 3.2s linear infinite;
+    }
+    .scope::after{
+      content:"";position:absolute;top:50%;left:50%;width:3px;height:3px;
+      margin:-1.5px;border-radius:50%;background:var(--radar);
+      box-shadow:0 0 6px 1px var(--radar);
+    }
+    @keyframes sweep{to{transform:rotate(360deg)}}
+    @media (prefers-reduced-motion:reduce){.scope::before{animation:none}}
+    .brand h1{
+      font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:.14em;
+      margin:0;text-transform:uppercase;line-height:1;
+    }
+    .brand h1 span{color:var(--radar);}
+    .brand .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--ghost);text-transform:uppercase;margin-top:3px;}
+
+    .reset{
+      font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--ghost);
+      text-transform:uppercase;cursor:pointer;padding:6px 10px;border:1px solid var(--line);
+      border-radius:3px;background:transparent;transition:.15s;
+    }
+    .reset:hover{color:var(--radar);border-color:var(--radar-dim);}
+
+    /* ===== Console ===== */
+    .wrap{max-width:1080px;margin:0 auto;padding:26px 22px 60px;}
+    .console{
+      background:var(--panel);border:1px solid var(--line);border-radius:6px;
+      padding:20px;margin-bottom:26px;
+    }
+    .console-head{
+      font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ghost);
+      text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;
+    }
+    .console-head::before{content:"";width:6px;height:6px;background:var(--radar);border-radius:50%;box-shadow:0 0 5px var(--radar);}
+    .field-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;}
+    label.lbl{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--ghost);text-transform:uppercase;margin-bottom:6px;}
+    select,input{
+      width:100%;font-family:var(--body);font-size:14px;color:var(--ink);
+      background:var(--panel-2);border:1px solid var(--line);border-radius:4px;
+      padding:11px 12px;transition:.15s;
+    }
+    select:focus,input:focus{outline:none;border-color:var(--radar);box-shadow:0 0 0 3px rgba(200,98,42,.12);}
+    select option{background:var(--panel-2);color:var(--ink);}
+    select optgroup{background:var(--field);color:var(--radar);font-family:var(--disp);letter-spacing:.06em;}
+    ::placeholder{color:var(--ghost-dim);}
+
+    .why{font-family:var(--body);font-size:12.5px;color:var(--prime);min-height:16px;margin:8px 2px 0;font-style:italic;}
+    .nudge,.warn{display:none;font-size:12px;border-radius:4px;padding:9px 11px;margin-top:8px;font-family:var(--body);}
+    .nudge{background:rgba(110,74,50,.18);border:1px solid var(--radar-dim);color:var(--prime);}
+    .warn{background:rgba(90,122,138,.12);border:1px solid var(--steel-dim);color:var(--steel);}
+
+    .hunt{
+      font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.16em;text-transform:uppercase;
+      color:var(--field);background:var(--radar);border:none;border-radius:4px;
+      padding:12px 26px;cursor:pointer;transition:.15s;white-space:nowrap;height:44px;
+    }
+    .hunt:hover{background:var(--prime);box-shadow:0 0 18px rgba(200,98,42,.35);}
+    .hunt:active{transform:translateY(1px);}
+
+    /* ===== Market read ===== */
+    .readout{
+      display:none;background:linear-gradient(180deg,var(--panel-2),var(--panel));
+      border:1px solid var(--line);border-left:3px solid var(--radar);border-radius:6px;
+      padding:16px 20px;margin-bottom:20px;
+    }
+    .readout .rl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ghost);text-transform:uppercase;margin-bottom:12px;}
+    .stats{display:flex;flex-wrap:wrap;gap:26px;}
+    .stat{display:flex;flex-direction:column;gap:3px;}
+    .stat .n{font-family:var(--disp);font-weight:700;font-size:26px;line-height:1;letter-spacing:.02em;}
+    .stat .k{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--ghost);text-transform:uppercase;}
+    .stat.prime .n{color:var(--radar);}
+    .stat.leader .n{color:var(--steel);}
+
+    /* ===== Results ===== */
+    .results{display:none;}
+    .results-head{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;
+    }
+    .results-head h2{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.14em;text-transform:uppercase;margin:0;color:var(--ghost);}
+    .actions{display:flex;gap:8px;}
+    .act{
+      font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--ghost);background:transparent;border:1px solid var(--line);border-radius:4px;
+      padding:9px 14px;cursor:pointer;transition:.15s;
+    }
+    .act:hover{border-color:var(--radar-dim);color:var(--ink);}
+    .act.primary{
+      font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.14em;
+      color:var(--field);background:var(--radar);border:1px solid var(--radar);
+    }
+    .act.primary:hover{background:var(--prime);border-color:var(--prime);color:var(--field);box-shadow:0 0 16px rgba(200,98,42,.35);}
+
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+    thead th{
+      font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ghost);
+      text-align:left;padding:11px 14px;background:var(--field);border-bottom:1px solid var(--line);font-weight:500;
+    }
+    tbody td{padding:14px 14px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top;}
+    tbody tr.prime-row td:first-child{box-shadow:inset 3px 0 0 var(--radar);}
+    tbody tr.prime-row:hover{background:rgba(200,98,42,.06);}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr{transition:background .12s;}
+    tbody tr:hover{background:var(--panel-2);}
+    td.name{font-weight:600;color:var(--ink);}
+    td.mono{font-family:var(--mono);font-size:12px;color:var(--ghost);}
+    td .rev{font-family:var(--mono);font-size:12px;}
+
+    /* qualification blips */
+    .blip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;}
+    .blip::before{content:"";width:7px;height:7px;border-radius:50%;flex:none;}
+    .blip.prime{color:var(--radar);}
+    .blip.prime::before{background:var(--radar);box-shadow:0 0 7px 1px var(--radar);}
+    .blip.work{color:var(--ink);}
+    .blip.work::before{background:var(--radar-dim);}
+    .blip.leader{color:var(--steel);}
+    .blip.leader::before{background:var(--steel);box-shadow:0 0 5px var(--steel);}
+    .blip.thin{color:var(--ghost-dim);}
+    .blip.thin::before{background:var(--ghost-dim);}
+    tr.dim{opacity:.5;}
+
+    .empty{padding:40px;text-align:center;color:var(--ghost);font-family:var(--mono);font-size:12px;letter-spacing:.1em;}
+
+    /* progress */
+    #progressContainer{display:none;margin:18px 0;}
+    .prog-label{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--radar);margin-bottom:7px;}
+    #progressTrack{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
+    #progressBar{width:0%;height:100%;background:linear-gradient(90deg,var(--radar-dim),var(--radar));transition:width .3s ease;box-shadow:0 0 8px var(--radar);}
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <div class="brand">
+      <div class="scope"></div>
+      <div>
+        <h1>PROSPECT<span> RADAR</span></h1>
+        <div class="tag">Local Target Acquisition</div>
+      </div>
+    </div>
+    <button class="reset" id="startOver">Reset Sweep</button>
+  </div>
+
+  <div class="wrap">
+    <div class="console">
+      <div class="console-head">Target Parameters</div>
+      <div class="field-row">
+        <div>
+          <label class="lbl" for="niche">Niche</label>
+          <select id="niche"></select>
+        </div>
+        <div>
+          <label class="lbl" for="location">Market / City</label>
+          <input type="text" id="location" placeholder="e.g. Detroit, MI">
+        </div>
+        <button class="hunt" id="search-btn">Sweep</button>
+      </div>
+      <div class="why" id="nicheWhy"></div>
+      <div class="nudge" id="nicheNudge"></div>
+      <div class="warn" id="cityWarn"></div>
+    </div>
+
+    <div class="readout" id="readout">
+      <div class="rl">Market Read</div>
+      <div class="stats" id="statsRow"></div>
+    </div>
+
+    <div id="progressContainer">
+      <div class="prog-label" id="progLabel">Working</div>
+      <div id="progressTrack"><div id="progressBar"></div></div>
+    </div>
+
+    <div class="results" id="leadsSection">
+      <div class="results-head">
+        <h2>Targets</h2>
+        <div class="actions">
+          <button class="act" id="enrichMissingLeads">Enrich</button>
+          <button class="act" id="add-emails-btn">Hunt Emails</button>
+          <button class="act primary" id="downloadCsvBtn">Export</button>
+        </div>
+      </div>
+      <div id="tableHost">
+        <table id="leadsTable">
+          <thead>
+            <tr>
+              <th>Business</th>
+              <th>Signal</th>
+              <th>Owner</th>
+              <th>Rating</th>
+              <th>Reviews</th>
+              <th>Profile</th>
+              <th>Website</th>
+              <th>Phone</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableTBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="citypop.js"></script>
+  <script src="niches.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
